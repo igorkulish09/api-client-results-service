@@ -1,55 +1,66 @@
-from jsonplaceholder_client import JsonPlaceholderClient, Post, Comment
-from cat_api_client import CatAPIClient, CatImage
-from email_verification_service import EmailVerificationService
-from result_service import ResultService
+"""This script initializes clients and services, performs various actions, and prints the results."""
 
-# Инициализация клиентов и сервисов
-jsonplaceholder_client = JsonPlaceholderClient()
-cat_api_client = CatAPIClient()
-email_verification_service = EmailVerificationService()
-result_service = ResultService()
+import asyncio
+from typing import List, Optional
 
-# Проверка е-мейла
-email_to_verify = "test@example.com"
-is_email_valid = email_verification_service.verify_email(email_to_verify)
-print(f"\nEmail Verification Result for {email_to_verify}: {is_email_valid}")
+import httpx
 
-# Получение всех постов
-all_posts = jsonplaceholder_client.get_all_posts()
-print("\nAll Posts:")
-for post in all_posts:
-    print(post.dict())
 
-# Получение всех комментариев
-all_comments = jsonplaceholder_client.get_all_comments()
-print("\nAll Comments:")
-for comment in all_comments:
-    print(comment.dict())
+class JSONPlaceholderClient:
+    """
+    Client for interacting with the JSONPlaceholder API.
 
-# Получение случайного изображения кота
-random_cat_image = cat_api_client.get_random_cat_image()
-print("\nRandom Cat Image:")
-print(random_cat_image.url)
+    Attributes:
+        base_url (str): The base URL of the JSONPlaceholder API.
+        success_status_code (int): The expected HTTP status code for successful responses.
+    """
 
-# Сохранение результатов в сервисе
-result_service.save_result({
-    "posts": [post.dict() for post in all_posts],
-    "comments": [comment.dict() for comment in all_comments],
-    "cat_image_url": random_cat_image.url
-})
+    def __init__(self, base_url: Optional[str] = 'https://jsonplaceholder.typicode.com'):
+        """
+        Initialize the JSONPlaceholderClient.
 
-# Получение всех сохраненных результатов
-saved_results = result_service.get_all_results()
-print("\nSaved Results:")
-for result in saved_results:
-    print(result)
+        Args:
+            base_url (Optional[str]): The base JSONPlaceholder API. Defaults to 'https://jsonplaceholder.typicode.com'.
+        """
+        self.base_url = base_url
+        self.success_status_code = 200  # Expected HTTP status code for successful responses
 
-# Получение всех подтвержденных е-мейлов
-verified_emails = email_verification_service.get_verified_emails()
-print("\nVerified Emails:")
-print(verified_emails)
+    async def get_posts(self) -> List[dict]:
+        """Get a list of posts from the JSONPlaceholder API."""
+        endpoint = f'{self.base_url}/posts'
 
-# Очистка подтвержденных е-мейлов
-email_verification_service.clear_verified_emails()
-print("\nVerified Emails after clearing:")
-print(email_verification_service.get_verified_emails())
+        async with httpx.AsyncClient() as client:
+            response = await client.get(endpoint)
+
+        return response.json() if response.status_code == self.success_status_code else []
+
+    async def get_comments(self) -> List[dict]:
+        """Get a list of comments from the JSONPlaceholder API."""
+        endpoint = f'{self.base_url}/posts'
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(endpoint)
+
+        return response.json() if response.status_code == self.success_status_code else []
+
+
+async def main():
+    """
+    Main function to demonstrate the usage of JSONPlaceholderClient.
+
+    This function creates an instance of JSONPlaceholderClient,
+    retrieves the list of posts and comments, and prints the results.
+    """
+    jsonplaceholder_client = JSONPlaceholderClient()
+
+    # Get the list of posts
+    posts = await jsonplaceholder_client.get_posts()
+    print('Posts:', posts)
+
+    # Get the list of comments
+    comments = await jsonplaceholder_client.get_comments()
+    print('Comments:', comments)
+
+
+if __name__ == '__main__':
+    asyncio.run(main())

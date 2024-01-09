@@ -1,5 +1,6 @@
-from setuptools import setup, find_packages
+"""Setup script for api-client-result."""
 
+from setuptools import find_packages, setup
 
 setup(
     name='rest_clients_example',
